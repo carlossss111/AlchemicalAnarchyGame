@@ -22,7 +22,7 @@ SECTION "Init", ROM0
 ; Global entrypoint for the program
 ; @uses all registers
 EntryPoint:
-    ld sp, $E000                ; set stack pointer
+    ld sp, StackStart           ; set stack pointer
 
     xor a
 	ld [rNR52], a               ; turn off audio
