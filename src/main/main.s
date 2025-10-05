@@ -28,6 +28,7 @@ EntryPoint:
 	ld [rNR52], a               ; turn off audio
 
     di                          ; disable interrupts for the main loop
+    call initVBlankHandling     ; init interrupt handling vars for later
 
     ld bc, TITLE_SCENE          ; first scene to load on program startup
     jp Main                     ; jump to the main loop

@@ -22,27 +22,32 @@ Interrupt:
     push bc
     push de
     push hl
-    jp HandlerSelector; start handler code
+    jp HandlerSelector          ; start handler code
 
 ENDSECTION
 
 
 /*******************************************************
 * VBLANK HANDLER
-* A variable holds the pointer to the handler code
+* Calls a function pointer every VBlank
+* Increments a frame counter
+* Retains register states
 ********************************************************/
 SECTION "VBlankHandlerVars", WRAM0
 
-    ; Function pointer to the start of the handler
-    VBlankHandlerPtr: dw
+    wVBlankHandlerPtr: dw       ; function pointer to handler
+    wFrameCounter: db           ; updated every VBlank (60fps)
     
 SECTION "VBlankHandler", ROM0
 
 ; Call the Handler function pointer
 HandlerSelector:
-    ld a, [VBlankHandlerPtr]
+    ld hl, wFrameCounter
+    inc [hl]                    ; update frame counter
+
+    ld a, [wVBlankHandlerPtr]
     ld h, a
-    ld a, [VBlankHandlerPtr + 1]
+    ld a, [wVBlankHandlerPtr + 1]
     ld l, a
     ld bc, .ret
     push bc
@@ -59,6 +64,19 @@ HandlerSelector:
 DefaultHandler::
     ret
 
+; Should be called at startup to initialise member variables
+; @uses hl
+initVBlankHandling::
+    ld hl, DefaultHandler
+    ld a, h
+    ld [wVBlankHandlerPtr], a
+    ld a, l
+    ld [wVBlankHandlerPtr], a   ; load the default handler
+
+    ld a, 0
+    ld [wFrameCounter], a       ; init frame counter
+    ret
+
 ENDSECTION
 
 
@@ -72,9 +90,9 @@ SECTION "VBlankSetters", ROM0
 ; @param hl: address of a VBlankHandler function
 SetVBlankHandler::
     ld a, h
-    ld [VBlankHandlerPtr], a
+    ld [wVBlankHandlerPtr], a
     ld a, l
-    ld [VBlankHandlerPtr + 1], a
+    ld [wVBlankHandlerPtr + 1], a
     ret
 
 ; Enable the VBlank bit on the interrupt register
