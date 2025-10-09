@@ -11,7 +11,7 @@ include "hardware.inc"
 ********************************************************/
 SECTION "RenderQueueVars", WRAM0
 
-    def MAX_BYTES equ 16 * 4    ; max bytes of cyclical queue (/4 = max no. of tiles per frame)
+    def MAX_BYTES equ (15+1) * 4; max bytes of cyclical queue (/4 = max no. of tiles per frame)
 
     wSpHolder: dw               ; holders the original stack pointer addr when in use
     wVramBank: dw               ; which VRAM bank to target ($9800 or $9C00)
@@ -39,26 +39,26 @@ InitRenderQueue::
 ; Enqueue a tilemap and a screen position to be rendered later
 ; @param b: tilemap x position
 ; @param c: tilemap y position 
-; @param hl: new tilemap value (e.g. addr to tile graphic)
+; @param d: new tile index 
 EnqueueTilemap::
+    ; find head 
     di                          ; disable interrupts
-    push de                     ; keep de state
-    ld d, h
-    ld e, l
     ld a, [wHead]
     ld l, a
     ld a, [wHead + 1]
     ld h, a                     ; load head address
     
+    ; load into head and increment head
     ld [hl], b                  ; enqueue x position
     inc hl
     ld [hl], c                  ; enqueue y position
     inc hl
-    ld [hl], d                  ; enqueue HIGH tilemap value
+    ld [hl], d                  ; enqueue tile index
     inc hl
-    ld [hl], e                  ; enqueue LOW tilemap value
+    ld [hl], 0                  ; align to 2 bytes each
     inc hl
 
+    ; check if we need to wrap the head back around to the start of the buffer
     ld bc, ($FFFF - wQueueBuffer - MAX_BYTES + 1)
     ld d, h
     ld e, l
@@ -70,26 +70,30 @@ EnqueueTilemap::
     ld [wHead + 1], a           ; if we are, set the head to the beginning
     jr .Ret
 .NoOverflow
+
+    ; store new head position
     ld a, e
     ld [wHead], a
     ld a, d
     ld [wHead + 1], a
 .Ret
-    pop de                      ; restore de register state
     reti                        ; reenable interrupts
 
 ; Dequeue all tilemap values and move them into VRAM
 ; This method should ONLY be called during a VBlank
+; (Ab)uses the stack pointer for speed
 ; @uses hl, de
 DequeueTilemapsToVRAM::
     ld [wSpHolder], sp          ; save the stack pointer
 
+    ; find tail
     ld a, [wTail]
     ld l, a
     ld a, [wTail + 1]
     ld h, a
     ld sp, hl                   ; point sp to the tail
 
+    ; while &head != &tail
 .DequeueLoopConditions:
     ld hl, sp + 0
     ld a, [wHead]
@@ -98,23 +102,49 @@ DequeueTilemapsToVRAM::
     ld a, [wHead + 1]
     cp a, h                     ; && LOW(sp) == LOW(head)
     jr z, .EndLoop              ; then exit the loop
+
+    ; some absolute fucking cracked 8-bit wizardry I cooked up
 .DequeueLoop:
+    pop hl                      ; dequeue position, h=y, l=x
+    xor a
+    ld c, h
+    ld h, 0
+    sla c                       ; y * 2
+    sla c                       ; y * 4
+    sla c                       ; y * 8
 
-    pop hl                      ; dequeue position
-    ;TODO vram copy here 
-    pop de                      ; dequeue tilemap value
-    ;TODO vram copy here 
+    sla c                       ; y * 16 (lowest 8 bits)
+    adc a, 0                    ; a = 0 + carry
+    ld b, a                     ; b = 0 + carry
+    xor a
+    sla c                       ; y * 32 (lowest 8 bits)
+    adc a, 0                    ; a = 0 + carry2 
+    sla b                       ; b = 0 + carry1 leftshifted
+    or a, b                     ; a = OR of both carries in bit position 0 and 1
+    ld b, a                     ; y * 32 (highest 8 bits)
 
+    ld e, l
+    ld d, 0
+    ld hl, TILEMAP0             ; hl = TILEMAP
+    add hl, bc                  ; hl = TILEMAP + (y * 32)
+    add hl, de                  ; hl = TILEMAP + (y * 32) + x
+    
+    pop de                      ; dequeue tilemap value, d=index
+    ld [hl], e                  ; load the tile index into the tilemap position !!
+
+    ; check if we need to wrap the tail to the start of the buffer
     ld hl, ($FFFF - wQueueBuffer - MAX_BYTES + 1)
     add hl, sp                  ; add head and start addr
     jr nc, .NoOverflow          ; if we are at the end
     ld sp, wQueueBuffer         ; loop sp to the beginning
 .NoOverflow
     jr .DequeueLoopConditions
-.EndLoop
 
+.EndLoop
+    ; store the tail position
     ld [wTail], sp              ; update the tail
     
+    ; restore the stack pointer to it's original position
     ld a, [wSpHolder]
     ld l, a
     ld a, [wSpHolder + 1]

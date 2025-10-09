@@ -1,7 +1,7 @@
 # Binaries
 bin
-src/generated
 
 # Extra
+*.ora
 notes
 

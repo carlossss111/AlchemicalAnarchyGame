@@ -22,6 +22,6 @@ ROM0
     ORG $4000
     "TitleTileData"
 
-    ORG $4250
+    ORG $4290
     "TitleTileMap"
 

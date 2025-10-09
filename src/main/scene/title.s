@@ -10,7 +10,9 @@ include "macros.inc"
 SECTION "TitleTileData", ROM0
 
     TitleTileData: INCBIN "title_screen.2bpp"
+    FlagData: INCBIN "animation_test.2bpp"
     TitleTileDataEnd:
+
 
 SECTION "TitleTileMap", ROM0
 
@@ -55,27 +57,74 @@ SECTION "TitleMain", ROM0
 ; Loop until the player presses start
 ; @uses all registers
 TitleLoop:
+
     ; PLACEHOLDER OBVIOUSLY
-    ld bc, 0
-    ld a, 0xC
-    ld h, a
-    ld a, 0x0
-    ld l, a
-    call EnqueueTilemap
-    ld bc, 0
-    ld a, 0xF
-    ld h, a
-    ld a, 0xF
-    ld l, a
-    call EnqueueTilemap
-    ld bc, 0
-    ld a, 0xE
-    ld h, a
-    ld a, 0xE
-    ld l, a
+    ld b, 1
+    ld c, 1
+    ld d, $25
     call EnqueueTilemap
 
     halt                        ; jump to Render label on VBlank
+    halt
+    halt
+    halt
+    halt
+
+    ld b, 1
+    ld c, 1
+    ld d, $26
+    call EnqueueTilemap
+
+    halt                        ; jump to Render label on VBlank
+    halt
+    halt
+    halt
+    halt
+
+    ld b, 1
+    ld c, 1
+    ld d, $27
+    call EnqueueTilemap
+
+    halt                        ; jump to Render label on VBlank
+    halt
+    halt
+    halt
+    halt
+
+    ld b, 1
+    ld c, 1
+    ld d, $26
+    call EnqueueTilemap
+
+    halt                        ; jump to Render label on VBlank
+    halt
+    halt
+    halt
+    halt
+
+    ld b, 1
+    ld c, 1
+    ld d, $25
+    call EnqueueTilemap
+
+    halt                        ; jump to Render label on VBlank
+    halt
+    halt
+    halt
+    halt
+
+    ld b, 1
+    ld c, 1
+    ld d, $28
+    call EnqueueTilemap
+
+    halt                        ; jump to Render label on VBlank
+    halt
+    halt
+    halt
+    halt
+
     jp TitleLoop
 
     ld bc, TITLE_SCENE          ; set next scene
