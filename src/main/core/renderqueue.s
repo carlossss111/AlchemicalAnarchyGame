@@ -11,7 +11,7 @@ include "hardware.inc"
 ********************************************************/
 SECTION "RenderQueueVars", WRAM0
 
-    def MAX_BYTES equ (15+1) * 4; max bytes of cyclical queue (/4 = max no. of tiles per frame)
+    def MAX_BYTES equ (255) * 4 ; max bytes of cyclical queue (/4 = max no. of tiles per frame)
 
     wSpHolder: dw               ; holders the original stack pointer addr when in use
     wVramBank: dw               ; which VRAM bank to target ($9800 or $9C00)
@@ -48,11 +48,45 @@ EnqueueTilemap::
     ld a, [wHead + 1]
     ld h, a                     ; load head address
     
-    ; load into head and increment head
-    ld [hl], b                  ; enqueue x position
+    push de                     ; store new tile index
+    ld d, 0
+    ld e, b
+
+    ; some absolute fucking cracked 8-bit wizardry I cooked up
+    xor a
+    sla c                       ; y * 2
+    sla c                       ; y * 4
+    sla c                       ; y * 8
+
+    sla c                       ; y * 16 (lowest 8 bits)
+    adc a, 0                    ; a = 0 + carry
+    ld b, a                     ; b = 0 + carry
+    xor a
+    sla c                       ; y * 32 (lowest 8 bits)
+    adc a, 0                    ; a = 0 + carry2 
+    sla b                       ; b = 0 + carry1 leftshifted
+    or a, b                     ; a = OR of both carries in bit position 0 and 1
+    ld b, a                     ; y * 32 (highest 8 bits)
+
+    ld hl, TILEMAP0             ; hl = TILEMAP
+    add hl, bc                  ; hl = TILEMAP + (y * 32)
+    add hl, de                  ; hl = TILEMAP + (y * 32) + x
+    ld b, h
+    ld c, l
+
+    ld a, [wHead]
+    ld l, a
+    ld a, [wHead + 1]
+    ld h, a                     ; load head address
+    
+    ; save the tilemap address
+    ld [hl], c                  ; load tilemap address !!
     inc hl
-    ld [hl], c                  ; enqueue y position
+    ld [hl], b                  ; load tilemap address !!
     inc hl
+
+    ; save the tile index
+    pop de                      ; restore tile index
     ld [hl], d                  ; enqueue tile index
     inc hl
     ld [hl], 0                  ; align to 2 bytes each
@@ -103,33 +137,15 @@ DequeueTilemapsToVRAM::
     cp a, h                     ; && LOW(sp) == LOW(head)
     jr z, .EndLoop              ; then exit the loop
 
-    ; some absolute fucking cracked 8-bit wizardry I cooked up
 .DequeueLoop:
-    pop hl                      ; dequeue position, h=y, l=x
-    xor a
-    ld c, h
-    ld h, 0
-    sla c                       ; y * 2
-    sla c                       ; y * 4
-    sla c                       ; y * 8
+    ; break if LY == 152 (vblank about to end)
+    ldh a, [rLY]
+    cp a, 152
+    jr z, .EndLoop
 
-    sla c                       ; y * 16 (lowest 8 bits)
-    adc a, 0                    ; a = 0 + carry
-    ld b, a                     ; b = 0 + carry
-    xor a
-    sla c                       ; y * 32 (lowest 8 bits)
-    adc a, 0                    ; a = 0 + carry2 
-    sla b                       ; b = 0 + carry1 leftshifted
-    or a, b                     ; a = OR of both carries in bit position 0 and 1
-    ld b, a                     ; y * 32 (highest 8 bits)
-
-    ld e, l
-    ld d, 0
-    ld hl, TILEMAP0             ; hl = TILEMAP
-    add hl, bc                  ; hl = TILEMAP + (y * 32)
-    add hl, de                  ; hl = TILEMAP + (y * 32) + x
-    
-    pop de                      ; dequeue tilemap value, d=index
+    ; load index into VRAM
+    pop hl                      ; dequeue tilemap address
+    pop de                      ; dequeue tilemap value, e=index
     ld [hl], e                  ; load the tile index into the tilemap position !!
 
     ; check if we need to wrap the tail to the start of the buffer
