@@ -9,15 +9,14 @@ include "macros.inc"
 ********************************************************/
 SECTION "TitleTileData", ROM0
 
-    TitleTileData: INCBIN "title_screen.2bpp"
-    FlagData: INCBIN "animation_test.2bpp"
-    TitleTileDataEnd:
+    SplashData: INCBIN "splash.2bpp"
+    SplashDataEnd:
 
 
 SECTION "TitleTileMap", ROM0
 
-    TitleTilemap: INCBIN "title_screen.tilemap"
-    TitleTilemapEnd:
+    SplashTilemap: INCBIN "splash2.tilemap"
+    SplashTilemapEnd:
 
 ENDSECTION
 
@@ -33,16 +32,14 @@ SECTION "TitleEntrypoint", ROM0
 TitleEntrypoint::
     ; Draw the screen once with vblank handler
     call SetVBlankInterruptOnly ; set the VBlank interrupt
-    call InitRenderQueue        ; init the renderer queue
     ld hl, RenderFirst
     call SetVBlankHandler       ; set the init VBlank handler to draw the entire screen once
     ei                          ; enable interrupts
     halt                        ; wait until a VBlank then call the init handler
 
-    ; Set reoccuring Vblank handler
-    ld hl, RenderLoop
-    call SetVBlankHandler       ; set the VBlank looping handler 
-
+    di
+.Pause:
+    jp .Pause
     jp TitleLoop
 
 ENDSECTION
@@ -83,17 +80,17 @@ RenderFirst:
     xor a                 
     ld [rLCDC], a               ; turn off the LCD since we are going to take a long time
 
-    ld de, TitleTileData        ; load all tiles into VRAM
-    ld hl, $9000
-    ld bc, TitleTileDataEnd - TitleTileData
+    ld de, SplashData        ; load all tiles into VRAM
+    ld hl, $8000
+    ld bc, SplashDataEnd - SplashData
     call Memcpy
 
-    ld de, TitleTilemap         ; load all tilemaps into VRAM
+    ld de, SplashTilemap         ; load all tilemaps into VRAM
     ld hl, TILEMAP0
-    ld bc, TitleTilemapEnd - TitleTilemap
+    ld bc, SplashTilemapEnd - SplashTilemap
     call Memcpy
 
-    ld a, LCDC_ON | LCDC_BG_ON | LCDC_OBJ_OFF
+    ld a, LCDC_ON | LCDC_BG_ON | LCDC_OBJ_OFF | LCDC_BLOCK01
     ld [rLCDC], a               ; turn on LCD
     ld a, COLOUR_PALETTE
     ld [rBGP], a                ; initialize background palette
