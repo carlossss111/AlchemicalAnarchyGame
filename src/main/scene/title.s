@@ -15,7 +15,7 @@ SECTION "TitleTileData", ROM0
 
 SECTION "TitleTileMap", ROM0
 
-    SplashTilemap: INCBIN "splash2.tilemap"
+    SplashTilemap: INCBIN "splash.tilemap"
     SplashTilemapEnd:
 
 ENDSECTION
