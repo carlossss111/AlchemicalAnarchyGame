@@ -91,13 +91,14 @@ SECTION "VBlankSetters", ROM0
 ; Sets the VBlankHandler
 ; @param hl: address of a VBlankHandler function
 SetVBlankHandler::
+    di
     ld a, l
     ld [wVBlankHandlerPtr], a
     ld a, h
     ld [wVBlankHandlerPtr + 1], a
     xor a
     ld [rIF], a                 ; clear pending VBlank interrupt requests (may be outdated)
-    ret
+    reti
 
 ; Enable the VBlank bit on the interrupt register
 SetVBlankInterrupt::

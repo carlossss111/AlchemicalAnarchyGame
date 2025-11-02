@@ -51,10 +51,9 @@ TitleEntrypoint::
 
     call FadeIn                 ; fade back in after loading everything
 
-    di
-    halt
-.Pause:
-    jp .Pause
+    call InitAllTitleAnimations
+    ld hl, RenderLoop
+    call SetVBlankHandler       ; set animations
 
     jp TitleLoop
 
@@ -92,6 +91,7 @@ SECTION "TitleRenderer", ROM0
 
 ; Render animations into VRAM using the render-queue
 RenderLoop:
+    call AnimateWavingFlag
     ret
 
 ENDSECTION
