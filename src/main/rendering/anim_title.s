@@ -1,23 +1,55 @@
 include "macros.inc"
+include "hardware.inc"
 
 
 SECTION "TitleAnimatorVars", WRAM0
 
-    wNextWavingFlagFrame: db
+    DEF FRAMES_PER_ANIM EQU 8   ; must be divisble by rightshifts!
+    DEF BITSHIFTS_PER_ANIM EQU 3; bits before the divisor
 
-    DEF FRAMES_PER_ANIM EQU 4   ; must be divisble by rightshifts!
-    DEF BITSHIFTS_PER_ANIM EQU 2; bits before the divisor
-    DEF DIVISIBLE_CHECK EQU %11111100 ; all bits >= dec 4
+    wNextWavingFlagFrame: db
 
 SECTION "TitleAnimations", ROM0
 
+    DEF FLAG_TOP_LEFT  EQU $9800 + $10c
+    DEF FLAG_TOP_RIGHT EQU $9800 + $10d
+    DEF FLAG_BOTTOM_LEFT  EQU $9800 + $12c
+    DEF FLAG_BOTTOM_RIGHT EQU $9800 + $12d
+
+; Frame 1
 WavingFlagF1:
+    ld a, $6c
+    ld [FLAG_TOP_LEFT], a 
+    ld a, $6d
+    ld [FLAG_TOP_RIGHT], a
+    ld a, $7b
+    ld [FLAG_BOTTOM_LEFT], a
+    ld a, $7c
+    ld [FLAG_BOTTOM_RIGHT], a
     ret
 
+; Frame 2
 WavingFlagF2:
+    ld a, $6c
+    ld [FLAG_TOP_LEFT], a 
+    ld a, $6d
+    ld [FLAG_TOP_RIGHT], a
+    ld a, $e2
+    ld [FLAG_BOTTOM_LEFT], a
+    ld a, $e3
+    ld [FLAG_BOTTOM_RIGHT], a
     ret
 
+; Frame 3
 WavingFlagF3:
+    ld a, $ec
+    ld [FLAG_TOP_LEFT], a 
+    ld a, $ed
+    ld [FLAG_TOP_RIGHT], a
+    ld a, $f8
+    ld [FLAG_BOTTOM_LEFT], a
+    ld a, $f9
+    ld [FLAG_BOTTOM_RIGHT], a
     ret
 
 
