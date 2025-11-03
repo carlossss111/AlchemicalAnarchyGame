@@ -13,7 +13,7 @@ MAP=minesweeper.map
 ASM_FLAGS=-Wall -I $(INC_DIR) -i $(GEN_DIR)
 L_FLAGS=-Wall --linkerscript linker.ld -n $(BIN_DIR)/minesweeper.sym --dmg --wramx --tiny
 F_FLAGS=-Wall --mbc-type 0x00 --ram-size 0x00 --title 'Minesweeper' -j -v -p 0xFF
-GFX_FLAGS=-c "\#9a9e3f,\#496b22,\#0d450b,\#1b2a09;" -u 
+GFX_FLAGS=-u 
 
 
 # Make Functions #####

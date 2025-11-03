@@ -9,13 +9,13 @@ include "macros.inc"
 ********************************************************/
 SECTION "TitleTileData", ROM0
 
-    SplashData: INCBIN "splash.2bpp"
+    SplashData: INCBIN "alchemical_anarchy.2bpp"
     SplashDataEnd:
 
 
 SECTION "TitleTileMap", ROM0
 
-    SplashTilemap: INCBIN "splash.tilemap"
+    SplashTilemap: INCBIN "alchemical_anarchy.tilemap"
     SplashTilemapEnd:
 
 ENDSECTION
@@ -34,14 +34,19 @@ TitleEntrypoint::
     ei
 
     xor a
-    ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01
+    ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK21
     ld [rLCDC], a               ; setup LCD
 
     call FadeOut                ; fade to black
 
-    ld de, SplashData           ; load all tiles into VRAM
-    ld hl, $8000
-    ld bc, SplashDataEnd - SplashData
+    ld de, SplashData           ; load first half of tiles into VRAM
+    ld hl, $9000
+    ld bc, 16 * 128
+    call VRAMCopy
+
+    ld de, SplashData + (16 * 128)           ; load second half of tiles into VRAM
+    ld hl, $8800
+    ld bc, 16 * 72
     call VRAMCopy
 
     ld de, SplashTilemap        ; load all tilemaps into VRAM
@@ -51,9 +56,9 @@ TitleEntrypoint::
 
     call FadeIn                 ; fade back in after loading everything
 
-    call InitAllTitleAnimations
-    ld hl, RenderLoop
-    call SetVBlankHandler       ; set animations
+    ;call InitAllTitleAnimations
+    ;ld hl, RenderLoop
+    ;call SetVBlankHandler       ; set animations
 
     jp TitleLoop
 
