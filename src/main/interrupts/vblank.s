@@ -56,6 +56,7 @@ HandlerSelector:
     push bc
     jp hl                       ; call handler function pointer
 .ret
+    call hUGE_dosound           ; update sound after every vblank
     pop hl                      ; restore all register states
     pop de
     pop bc

@@ -7,10 +7,13 @@ RSC_DIR=src/resources
 BIN_DIR=bin
 GEN_DIR=bin/generated
 
+LIB_SRC_DIR=lib/hUGEDriver_src
+LIB_INC_DIR=lib/hUGEDriver_inc
+
 EXE=minesweeper.gb
 MAP=minesweeper.map
 
-ASM_FLAGS=-Wall -I $(INC_DIR) -i $(GEN_DIR)
+ASM_FLAGS=-Wall -I $(INC_DIR) -I $(LIB_INC_DIR) -i $(GEN_DIR)
 L_FLAGS=-Wall --linkerscript linker.ld -n $(BIN_DIR)/minesweeper.sym --dmg --wramx --tiny
 F_FLAGS=-Wall --mbc-type 0x00 --ram-size 0x00 --title 'Minesweeper' -j -v -p 0xFF
 GFX_FLAGS=-u 
@@ -23,6 +26,7 @@ recursive_wildcard=$(foreach d,\
 		$(call recursive_wildcard, $d, $2) $(filter $(subst *, %, $2), $d) \
 )
 SOURCE_FILE_LIST=$(call recursive_wildcard,$(SRC_DIR),*.s)
+LIB_SOURCE_FILE_LIST=$(call recursive_wildcard,$(LIB_SRC_DIR),*.s)
 IMAGE_FILE_LIST=$(call recursive_wildcard,$(RSC_DIR),*.png)
 TILEMAP_FILE_LIST=$(call recursive_wildcard,$(RSC_DIR),*.tilemap)
 
@@ -31,6 +35,10 @@ TILEMAP_FILE_LIST=$(call recursive_wildcard,$(RSC_DIR),*.tilemap)
 
 compile: clean generate-2bpp copy-tilemaps
 	for ASM_FILE in $(SOURCE_FILE_LIST) ; do \
+		OBJ_FILE=`basename $$ASM_FILE | cut -d. -f1`.o ;\
+		rgbasm $$ASM_FILE $(ASM_FLAGS) -o $(BIN_DIR)/$$OBJ_FILE ; \
+	done
+	for ASM_FILE in $(LIB_SOURCE_FILE_LIST) ; do \
 		OBJ_FILE=`basename $$ASM_FILE | cut -d. -f1`.o ;\
 		rgbasm $$ASM_FILE $(ASM_FLAGS) -o $(BIN_DIR)/$$OBJ_FILE ; \
 	done

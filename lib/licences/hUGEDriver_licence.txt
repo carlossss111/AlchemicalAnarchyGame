@@ -1,0 +1,4 @@
+hUGETracker and hUGEDriver are dedicated to the public domain.
+
+https://github.com/SuperDisk/hUGEDriver
+

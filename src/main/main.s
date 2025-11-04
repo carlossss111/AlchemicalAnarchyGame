@@ -24,8 +24,14 @@ SECTION "Init", ROM0
 EntryPoint:
     ld sp, StackStart           ; set stack pointer
 
-    xor a
-	ld [rNR52], a               ; turn off audio
+    ld a, $80
+    ld [rAUDENA], a             ; NR52 enable audio
+    ld a, $FF
+    ld [rAUDTERM], a            ; NR51 set sound panning to neutral
+    ld a, $77
+    ld [rAUDVOL], a             ; NR50 set master volume
+    ld hl, GameMusic 
+    call hUGE_init              ; set music track
 
     di                          ; disable interrupts for the main loop
     call initVBlankHandling     ; init interrupt handling vars for later
