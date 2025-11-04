@@ -32,11 +32,23 @@ SECTION "TitleSpriteData", ROM0
 
 SECTION "TitleSpriteMap", ROM0
 
-    Sparkles1Indices: INCBIN "sparkles.tilemap"
+    ; large sparkle
+    SparkleSheetA: db $00, $01, $06, $07, $0a, $0b
+    ; tiny sparkle
+    SparkleSheetB: db $03
+    ; tall sparkle
+    SparkleSheetC: db $02, $08
+    ; medium sparkle
+    SparkleSheetD: db $04, $09
 
 SECTION "TitleMetasprites", WRAM0
     
     Sparkles1: STRUCT_METASPRITE
+    Sparkles2: STRUCT_METASPRITE
+    Sparkles3: STRUCT_METASPRITE
+    Sparkles4: STRUCT_METASPRITE
+    Sparkles5: STRUCT_METASPRITE
+    Sparkles6: STRUCT_METASPRITE
 
 ENDSECTION
 
@@ -54,11 +66,10 @@ TitleEntrypoint::
 
     call FadeOut                ; fade to black
 
-    call ClearShadowOAM         ; initialise shadow OAM
 
-    xor a
-    ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK21 | LCDC_OBJ_8 | LCDC_OBJ_ON
-    ld [rLCDC], a               ; setup LCD
+    ;; Sprites ;;
+
+    call ClearShadowOAM         ; initialise shadow OAM
 
     ld a, DEFAULT_PALETTE
     ld [rOBP0], a               ; set sprite palette
@@ -75,13 +86,102 @@ TitleEntrypoint::
     call InitMSprite            ; initialise a sparkle sprite
 
     ld hl, Sparkles1            ; sprite
-    ld bc, Sparkles1Indices     ; spritesheet
+    ld bc, SparkleSheetA        ; spritesheet
     call ColourMSprite          ; set the sparkle's spritesheet
     
     ld hl, Sparkles1            ; sprite
-    ld b, 8                     ; x
-    ld c, 16                    ; y
+    ld b, 12                    ; x
+    ld c, 84                    ; y
     call PositionMSprite
+
+    ;;
+
+    ld hl, Sparkles2            ; sprite
+    ld bc, ShadowOAM + 24       ; place to shadow at
+    ld d, 2                     ; width
+    ld e, 3                     ; height
+    call InitMSprite            ; initialise a sparkle sprite
+
+    ld hl, Sparkles2            ; sprite
+    ld bc, SparkleSheetA        ; spritesheet
+    call ColourMSprite          ; set the sparkle's spritesheet
+    
+    ld hl, Sparkles2            ; sprite
+    ld b, 144                   ; x
+    ld c, 86                    ; y
+    call PositionMSprite
+
+    ;;
+
+    ld hl, Sparkles3            ; sprite
+    ld bc, ShadowOAM + 48       ; place to shadow at
+    ld d, 1                     ; width
+    ld e, 1                     ; height
+    call InitMSprite            ; initialise a sparkle sprite
+
+    ld hl, Sparkles3            ; sprite
+    ld bc, SparkleSheetB        ; spritesheet
+    call ColourMSprite          ; set the sparkle's spritesheet
+    
+    ld hl, Sparkles3            ; sprite
+    ld b, 102                   ; x
+    ld c, 94                    ; y
+    call PositionMSprite
+    
+    ;;
+
+    ld hl, Sparkles4            ; sprite
+    ld bc, ShadowOAM + 72       ; place to shadow at
+    ld d, 1                     ; width
+    ld e, 1                     ; height
+    call InitMSprite            ; initialise a sparkle sprite
+
+    ld hl, Sparkles4            ; sprite
+    ld bc, SparkleSheetB        ; spritesheet
+    call ColourMSprite          ; set the sparkle's spritesheet
+    
+    ld hl, Sparkles4            ; sprite
+    ld b, 112                   ; x
+    ld c, 122                   ; y
+    call PositionMSprite
+    
+    ;;
+
+    ld hl, Sparkles5            ; sprite
+    ld bc, ShadowOAM + 96       ; place to shadow at
+    ld d, 1                     ; width
+    ld e, 2                     ; height
+    call InitMSprite            ; initialise a sparkle sprite
+
+    ld hl, Sparkles5            ; sprite
+    ld bc, SparkleSheetC        ; spritesheet
+    call ColourMSprite          ; set the sparkle's spritesheet
+    
+    ld hl, Sparkles5            ; sprite
+    ld b, 64                    ; x
+    ld c, 120                   ; y
+    call PositionMSprite
+
+    ;;
+
+    ld hl, Sparkles6            ; sprite
+    ld bc, ShadowOAM + 120      ; place to shadow at
+    ld d, 1                     ; width
+    ld e, 2                     ; height
+    call InitMSprite            ; initialise a sparkle sprite
+
+    ld hl, Sparkles6            ; sprite
+    ld bc, SparkleSheetD        ; spritesheet
+    call ColourMSprite          ; set the sparkle's spritesheet
+    
+    ld hl, Sparkles6            ; sprite
+    ld b, 20                    ; x
+    ld c, 140                   ; y
+    call PositionMSprite
+
+
+
+    ;; Background ;;
 
     ld de, SplashData           ; load first half of tiles into VRAM
     ld hl, $9000
@@ -97,6 +197,14 @@ TitleEntrypoint::
     ld hl, TILEMAP0
     ld bc, SplashTilemapEnd - SplashTilemap
     call VRAMCopy
+
+
+    ;; LCD ;;
+
+    xor a
+    ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK21 | LCDC_OBJ_8 | LCDC_OBJ_ON
+    ld [rLCDC], a               ; setup LCD
+
 
     call FadeIn                 ; fade back in after loading everything
 
@@ -120,7 +228,10 @@ SECTION "TitleMain", ROM0
 ; @uses all registers
 TitleLoop:
     halt                        ; run this loop at 60fps (more is waste of battery)
-    
+
+    ld hl, Sparkles1
+    call AnimateSparkle
+
     call GetCurrentKeys         ; return current keypress in register a
     and a, JOYP_START           ; check if start
     jp z, TitleLoop             ; if button not pressed, loop again

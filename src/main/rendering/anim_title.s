@@ -6,7 +6,7 @@ include "hardware.inc"
 * TITLE FRAMES
 * Frames that an index into a x,y coordinate on screen
 ********************************************************/
-SECTION "TitleFrames", ROM0
+SECTION "TitleBackgroundFrames", ROM0
 
 ; Frame 1
 BottleF1:
@@ -77,6 +77,27 @@ BottleF3:
 ENDSECTION
 
 
+SECTION "TitleSpriteFrames", ROM0
+
+; Frame 1
+; @param hl: pointer to sparkle metasprite
+SparkleF1:
+    ld b, 0
+    ld c, 2
+    call MoveMSprite
+    ret
+    
+; Frame 2
+; @param hl: pointer to sparkle metasprite
+SparkleF2:
+    ld b, 0
+    ld c, -2
+    call MoveMSprite
+    ret
+
+ENDSECTION
+
+
 /*******************************************************
 * ANIMATOR
 * The animator should ideally be called on every vblank.
@@ -90,8 +111,9 @@ SECTION "TitleAnimatorVars", WRAM0
     DEF BITSHIFTS_PER_ANIM EQU 4 ; bits before the divisor
 
     wNextBottleFrame: db
+    wNextSparkleFrame: db
 
-SECTION "TitleAnimator", ROM0
+SECTION "TitleBackgroundAnimator", ROM0
 
 ; Returns 1 if the frame is divisible by FRAMES_PER_ANIM
 ; Returns 0 otherwise
@@ -112,13 +134,9 @@ IsAnimationFrame:
 
 ; Initialises all title animations
 InitAllTitleAnimations::
-    call InitBottle
-    ret
-
-; Sets the bottle static variables to 0
-InitBottle::
     xor a
     ld [wNextBottleFrame], a
+    ld [wNextSparkleFrame], a
     ret
 
 ; Checks if we are on an animation frame, if we are, animate!
@@ -169,6 +187,59 @@ AnimateBottle::
     ld a, [wNextBottleFrame]
     inc a      
     ld [wNextBottleFrame], a
+    jr .SwitchEnd
+
+.SwitchEnd
+    ret
+
+SECTION "TitleSpriteAnimator", ROM0
+
+; Checks if we are on an animation frame, if we are, animate!
+; @param hl: sparkle metasprite
+AnimateSparkle::
+    push hl
+
+    ld a, [hFrameCounter]
+    ld b, BITSHIFTS_PER_ANIM
+    call IsAnimationFrame
+    cp TRUE
+    jp z, .AnimationFrame       ; confirm it is an animation frame,
+    ret                         ; otherwise return early
+
+.AnimationFrame:
+    ld a, [wNextSparkleFrame]
+    ld hl, .Switch
+    rla
+    rla
+    rla
+    rla                         ; a * 16
+    ld c, a
+    xor b
+    add hl, bc                  ; calculate switch address
+    jp hl
+    
+.Switch
+    pop hl                      ; 1 byte
+    call SparkleF1              ; 3 bytes
+    ld hl, wNextSparkleFrame           ; 3 bytes
+    inc [hl]                    ; 1 byte
+    jr .SwitchEnd               ; 2 bytes
+    FOR V, 6
+        nop                     ; 6 bytes padding
+    ENDR
+
+    pop hl
+    call SparkleF2 
+    ld hl, wNextSparkleFrame
+    ld [hl], 0
+    jr .SwitchEnd
+    FOR V, 6
+        nop
+    ENDR
+
+    ld a, [wNextSparkleFrame]
+    inc a      
+    ld [wNextSparkleFrame], a
     jr .SwitchEnd
 
 .SwitchEnd

@@ -6,9 +6,9 @@
 ********************************************************/
 SECTION "Scratch", WRAM0
 
-    ScratchA:: dw 
-    ScratchB:: dw
-    ScratchC:: dw
+    wScratchA:: dw 
+    wScratchB:: dw
+    wScratchC:: dw
 
 ENDSECTION
 
