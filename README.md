@@ -1,8 +1,9 @@
-# Gameboy Minesweeper (as yet un-named)
+# Alchemical Anarchy
+A Minesweeper Game for the Gameboy! Still heavily in progress!
 
-Here I am making yet another Minesweeper clone... what can I say.
+![Title Screen](demo_1.png)
 
-This one is my most ambitious project yet, as it is written in SM83 assembly (a mix between the i8080 and the Z80) for the original Nintendo Gameboy. It is intended for a Cartridge with 32KB of ROM alone.
+This one is my most ambitious projects yet as it is written in SM83 assembly (a mix between the i8080 and the Z80) for the original Nintendo Gameboy. It is intended for a Cartridge with 32KB of ROM alone.
 
 The goal of the project is to write a good minesweeper game, complete with a title screen, score, art and music.
 
@@ -14,7 +15,7 @@ Compile into a .gb using the Makefile. This will require the [RGBDS toolchain](h
 make
 ```
 
-## Compabibility
+## Compatibility
 
 This game is intended for the Gameboy DMG-01, and would therefore be compatible with the CGB and the GBA.
 
@@ -34,7 +35,15 @@ emulicious bin/minesweeper.gb
 ```
 
 ### Real Hardware
-Coming soon...
+After running `make`, take the .gb file and load it onto a **32kb cartridge** that is compatible with **GBxCart RW**. Hey presto, you have a real game! Easy!
+
+![Real hardware](demo_2.jpg)
+
+See: https://www.gbxcart.com/
+
+## Libraries
+I am using the hUGE library for audio because I am not a musical person.
+Available here: https://nickfa.ro/wiki/hUGETracker
 
 ## Resources
 I got a lot out of the following material helpfully provided by the community:
