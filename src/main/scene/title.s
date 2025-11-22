@@ -213,11 +213,11 @@ TitleEntrypoint::
 
 
     ;; Scanline Interrupt ;;
-    ld a, 5 
+    ld a, TOP_SCANLINE_TO_RAISE
     call ReqStatOnScanline
 
-    ld hl, StatFunction
-    call etStatHandler
+    ld hl, ScreenYRaise
+    call SetStatHandler
 
     call SetStatInterrupt
 
@@ -271,6 +271,9 @@ SECTION "TitleRenderer", ROM0
 
 ; Render animations into VRAM using the render-queue
 RenderLoop:
+    ei                          ; bit of a warcrime but we need to still allow
+                                ; stat interrupts while the vblank is
+                                ; being handled
     call RenderToOAM
     call Animate
     ret
@@ -284,8 +287,42 @@ ENDSECTION
 ********************************************************/
 SECTION "TitleStat", ROM0
 
-StatFunction:
-    nop
+DEF TOP_SCANLINE_TO_RAISE EQU 10
+DEF BOTTOM_SCANLINE_TO_RAISE EQU 70
+DEF LINES_TO_RAISE_BY EQU 4
+
+ScreenYRaise:
+    ldh a, [rSTAT]
+    and %00000011
+    or STAT_HBLANK
+    jr nz, ScreenYRaise         ; wait for HBlank
+
+    ld a, LINES_TO_RAISE_BY
+    ld [rSCY], a                ; raise screen Y
+
+    ld a, BOTTOM_SCANLINE_TO_RAISE
+    call ReqStatOnScanline      ; set scanline for next STAT interrupt
+
+    ld hl, ScreenYLower
+    call SetStatHandler         ; set handler for next STAT interrupt
+
+    ret
+
+ScreenYLower:
+    ldh a, [rSTAT]
+    and %00000011
+    or STAT_HBLANK
+    jr nz, ScreenYLower         ; wait for HBlank
+
+    xor a
+    ld [rSCY], a                ; lower screen Y
+
+    ld a, TOP_SCANLINE_TO_RAISE
+    call ReqStatOnScanline      ; set scanline for next STAT interrupt
+
+    ld hl, ScreenYRaise
+    call SetStatHandler         ; set handler for next STAT interrupt
+
     ret
 
 ENDSECTION
