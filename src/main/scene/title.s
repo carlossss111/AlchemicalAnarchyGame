@@ -43,6 +43,8 @@ SECTION "TitleSpriteMap", ROM0
 
 SECTION "TitleMetasprites", WRAM0
     
+    DEF SPARKLES_ARR_LEN EQU 6
+    SparklesArr:
     Sparkles1: STRUCT_METASPRITE
     Sparkles2: STRUCT_METASPRITE
     Sparkles3: STRUCT_METASPRITE
@@ -61,7 +63,8 @@ SECTION "TitleEntrypoint", ROM0
 ; Entrypoint for the title screen, initialises the screen
 ; @uses all registers
 TitleEntrypoint::
-    call SetVBlankInterrupt     ; set the VBlank interrupt
+    call SetVBlankInterrupt
+    call SetStatInterrupt
     ei
 
     call FadeOut                ; fade to black
@@ -182,7 +185,7 @@ TitleEntrypoint::
 
     ;; Background ;;
 
-    ld de, SplashData           ; load first half of tiles into VRAM
+    ld de, SplashData              ; load first half of tiles into VRAM
     ld hl, $9000
     ld bc, 16 * 128
     call VRAMCopy
@@ -192,7 +195,7 @@ TitleEntrypoint::
     ld bc, SplashDataEnd - (SplashData + 16 * 128)
     call VRAMCopy
 
-    ld de, SplashTilemap        ; load all tilemaps into VRAM
+    ld de, SplashTilemap           ; load all tilemaps into VRAM
     ld hl, TILEMAP0
     ld bc, SplashTilemapEnd - SplashTilemap
     call VRAMCopy
@@ -201,25 +204,18 @@ TitleEntrypoint::
     ;; Animations ;;
 
     call InitAnimator
+    call InitTitleTextAnimation
     call InitBottleAnimation
-    ld hl, Sparkles1
-    ld b, 6
+    ld hl, SparklesArr          ; sprites to animate
+    ld b, SPARKLES_ARR_LEN      ; length of sprite array
     call InitSparkleAnimation
 
     ld bc, AnimateBottle
     call AddAnimation
+    ld bc, AnimateTitleText
+    call AddAnimation
     ld bc, AnimateSparkle
     call AddAnimation
-
-
-    ;; Scanline Interrupt ;;
-    ld a, TOP_SCANLINE_TO_RAISE
-    call ReqStatOnScanline
-
-    ld hl, ScreenYRaise
-    call SetStatHandler
-
-    call SetStatInterrupt
 
 
     ;; LCD ;;
@@ -247,7 +243,6 @@ ENDSECTION
 SECTION "TitleMain", ROM0
 
 ; Loop until the player presses start
-; @uses all registers
 TitleLoop:
     halt                        ; run this loop at 60fps (more is waste of battery)
 
@@ -255,7 +250,7 @@ TitleLoop:
     and a, JOYP_START           ; check if start
     jp z, TitleLoop             ; if button not pressed, loop again
 
-.exit:
+.EndLoop:
     ld bc, GAME_SCENE           ; set next scene
     di                          ; disable interrupts
     ret                         ; return to main loop
@@ -271,58 +266,9 @@ SECTION "TitleRenderer", ROM0
 
 ; Render animations into VRAM using the render-queue
 RenderLoop:
-    ei                          ; bit of a warcrime but we need to still allow
-                                ; stat interrupts while the vblank is
-                                ; being handled
+    ei                          ; bit of a warcrime but we still need stat interrupts
     call RenderToOAM
     call Animate
-    ret
-
-ENDSECTION
-
-
-/*******************************************************
-* STAT FUNCTION
-* Does bonus fun stuff after the stat interupt
-********************************************************/
-SECTION "TitleStat", ROM0
-
-DEF TOP_SCANLINE_TO_RAISE EQU 10
-DEF BOTTOM_SCANLINE_TO_RAISE EQU 70
-DEF LINES_TO_RAISE_BY EQU 4
-
-ScreenYRaise:
-    ldh a, [rSTAT]
-    and %00000011
-    or STAT_HBLANK
-    jr nz, ScreenYRaise         ; wait for HBlank
-
-    ld a, LINES_TO_RAISE_BY
-    ld [rSCY], a                ; raise screen Y
-
-    ld a, BOTTOM_SCANLINE_TO_RAISE
-    call ReqStatOnScanline      ; set scanline for next STAT interrupt
-
-    ld hl, ScreenYLower
-    call SetStatHandler         ; set handler for next STAT interrupt
-
-    ret
-
-ScreenYLower:
-    ldh a, [rSTAT]
-    and %00000011
-    or STAT_HBLANK
-    jr nz, ScreenYLower         ; wait for HBlank
-
-    xor a
-    ld [rSCY], a                ; lower screen Y
-
-    ld a, TOP_SCANLINE_TO_RAISE
-    call ReqStatOnScanline      ; set scanline for next STAT interrupt
-
-    ld hl, ScreenYRaise
-    call SetStatHandler         ; set handler for next STAT interrupt
-
     ret
 
 ENDSECTION

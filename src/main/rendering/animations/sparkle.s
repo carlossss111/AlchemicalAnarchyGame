@@ -2,6 +2,7 @@ include "macros.inc"
 include "hardware.inc"
 include "metasprites.inc"
 
+DEF PIXELS_TO_MOVE_BY EQU 2
 
 /*******************************************************
 * FRAMES
@@ -29,7 +30,7 @@ SparkleF1:
     add hl, de
 
     ld b, 0
-    ld c, 2
+    ld c, -PIXELS_TO_MOVE_BY
     call MoveMSprite
 
     pop de
@@ -61,7 +62,7 @@ SparkleF2:
     add hl, de
 
     ld b, 0
-    ld c, -2
+    ld c, PIXELS_TO_MOVE_BY
     call MoveMSprite
 
     pop de
