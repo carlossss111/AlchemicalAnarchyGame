@@ -4,6 +4,11 @@ include "macros.inc"
 include "metasprites.inc"
 
 
+DEF CURSOR_TOP_Y_POS EQU 56
+DEF CURSOR_BOTTOM_Y_POS EQU 96
+DEF CURSOR_MOVE_Y EQU CURSOR_BOTTOM_Y_POS - CURSOR_TOP_Y_POS
+
+
 /*******************************************************
 * OPTIONS DATA
 * Tilemap and tiles
@@ -99,6 +104,10 @@ OptionsEntrypoint::
     ;; Animations ;;
 
     call InitAnimator
+    call InitCursorAnimation
+
+    ld bc, AnimateCursor
+    call AddAnimation
 
 
     ;; LCD ;;
@@ -125,10 +134,78 @@ ENDSECTION
 ********************************************************/
 SECTION "OptionsMain", ROM0
 
+; Moves the cursor up and down along the options menu
+; If it is at the top, it goes down
+; If it is at the bottom, it goes up
+MoveCursor:
+    ld hl, Cursor
+    ld d, 0
+    ld e, META_Y
+    add hl, de
+    ld a, [hl]                  ; get Y position of cursor
+    cp CURSOR_TOP_Y_POS
+    jr nz, .ElseMoveToTop
+
+.IfMoveToBottom:
+    ld hl, Cursor
+    ld b, 0
+    ld c, CURSOR_MOVE_Y
+    call MoveMSprite            ; move cursor down
+    jr .EndIf
+
+.ElseMoveToTop:
+    ld hl, Cursor
+    ld b, 0
+    ld c, -CURSOR_MOVE_Y
+    call MoveMSprite            ; move cursor up
+
+.EndIf:
+    ret
+
+
+; Main Options loop that waits for input and then calls subroutines after
 OptionsMain:
     halt                        ; run this loop at 60fps (more is waste of battery)
 
-    jp OptionsMain
+    call GetNewKeys ; return current keypress in register a
+
+    ld b, a
+    ld a, b
+    and a, JOYP_A               ; check if buttons pressed
+    jr nz, .IfAPressed
+    ld a, b
+    and a, JOYP_B
+    jr nz, .IfAPressed
+    ld a, b
+    and a, JOYP_SELECT
+    jr nz, .IfAPressed
+    ld a, b
+    and a, JOYP_UP
+    jr nz, .IfUpPressed
+    ld a, b
+    and a, JOYP_DOWN
+    jr nz, .IfDownPressed
+    ld a, b
+    and a, JOYP_START
+    jr nz, .IfStartPressed
+    jr .EndIf
+
+.IfAPressed:
+    call MoveCursor
+    jr .EndIf
+
+.IfUpPressed:
+    jr .EndIf
+
+.IfDownPressed:
+    jr .EndIf
+
+.IfStartPressed:
+    jr .EndIf
+
+.EndIf:
+    jr OptionsMain
+
     ret
 
 ENDSECTION
@@ -143,6 +220,7 @@ SECTION "OptionsRenderer", ROM0
 ; Render animations into VRAM using the render-queue
 RenderLoop:
     call RenderToOAM
+    call Animate
     ret
 
 ENDSECTION

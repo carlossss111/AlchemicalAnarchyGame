@@ -248,7 +248,7 @@ TitleLoop:
 
     call GetCurrentKeys         ; return current keypress in register a
     and a, JOYP_START           ; check if start
-    jp z, TitleLoop             ; if button not pressed, loop again
+    jr z, TitleLoop             ; if button not pressed, loop again
 
 .EndLoop:
     ld bc, OPTION_SCENE         ; set next scene
