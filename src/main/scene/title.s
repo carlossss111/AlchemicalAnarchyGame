@@ -251,7 +251,7 @@ TitleLoop:
     jp z, TitleLoop             ; if button not pressed, loop again
 
 .EndLoop:
-    ld bc, GAME_SCENE           ; set next scene
+    ld bc, OPTION_SCENE         ; set next scene
     di                          ; disable interrupts
     ret                         ; return to main loop
 

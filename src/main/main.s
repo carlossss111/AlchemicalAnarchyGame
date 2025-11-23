@@ -76,8 +76,6 @@ Main:
     jp Main                     ; while True
 
 
-OptionsEntrypoint:
-    ret                         ; unimplemented
 GameEntrypoint:
     ret                         ; unimplemented
 

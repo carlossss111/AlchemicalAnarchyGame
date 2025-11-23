@@ -66,6 +66,7 @@ HandlerSelector:
 ; Called by the VBlank Interrupt
 ; Doesn't do anything except implicitly wake up the CPU from the halt instr
 DefaultHandler:
+    call RenderToOAM
     ret
 
 ; Should be called at startup to initialise member variables

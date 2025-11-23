@@ -101,7 +101,7 @@ SetStatInterrupt::
     ret
 
 ; Disable the STAT bit on the interrupt register
-UnsetSTATInterrupt::
+UnsetStatInterrupt::
     ld a, [rIE]
     and a, !IE_STAT             ; unsets the STAT bit
     ldh [rIE], a                ; disables the STAT interrupt flag
