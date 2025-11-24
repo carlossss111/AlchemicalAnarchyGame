@@ -34,8 +34,8 @@ CHARMAP "t", $9D
 CHARMAP "u", $9E
 CHARMAP "v", $9F
 CHARMAP "w", $A0
-CHARMAP "y", $A1
-CHARMAP "x", $A2
+CHARMAP "x", $A1
+CHARMAP "y", $A2
 CHARMAP "z", $A3
 CHARMAP "!", $A4
 CHARMAP "?", $A5

@@ -9,6 +9,10 @@ include "dimensionopt.inc"
 DEF CURSOR_TOP_Y_POS EQU 56
 DEF CURSOR_BOTTOM_Y_POS EQU 96
 DEF CURSOR_MOVE_Y EQU CURSOR_BOTTOM_Y_POS - CURSOR_TOP_Y_POS
+DEF SIZE_STR_INDEX = $C2
+DEF SIZE_STR_LEN = 6
+DEF DIFF_STR_INDEX = $162
+DEF DIFF_STR_LEN = 6
 
 
 /*******************************************************
@@ -123,6 +127,7 @@ OptionsEntrypoint::
 
 
     ;; LCD ;;
+
     xor a
     ld [rSCY], a
 
@@ -134,6 +139,21 @@ OptionsEntrypoint::
     call SetVBlankHandler       ; set background animations
 
     call FadeIn                 ; fade back in after loading everything
+
+
+    ;; Game Setup ;;
+
+    call InitOptions            ; initialize options variables
+
+    call GetDimDefault          ; de = pointer to descriptor
+    ld b, SIZE_STR_LEN
+    ld hl, $9800 + SIZE_STR_INDEX
+    call VRAMCopyFast           ; copy options descriptor into VRAM to display
+
+    call GetDiffDefault          ; de = pointer to descriptor
+    ld b, DIFF_STR_LEN
+    ld hl, $9800 + DIFF_STR_INDEX
+    call VRAMCopyFast           ; copy options descriptor into VRAM to display
 
     jp OptionsMain
 
@@ -207,9 +227,21 @@ OptionsMain:
     jr .EndIf
 
 .IfUpPressed:
+    call DimOptionPrev
+    ld b, SIZE_STR_LEN
+    ld d, h
+    ld e, l
+    ld hl, $9800 + SIZE_STR_INDEX
+    call VRAMCopyFast
     jr .EndIf
 
 .IfDownPressed:
+    call DimOptionNext
+    ld b, SIZE_STR_LEN
+    ld d, h
+    ld e, l
+    ld hl, $9800 + SIZE_STR_INDEX
+    call VRAMCopyFast
     jr .EndIf
 
 .IfStartPressed:
