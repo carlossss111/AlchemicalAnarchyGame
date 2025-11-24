@@ -1,7 +1,9 @@
 include "hardware.inc"
 include "enums.inc"
 include "macros.inc"
+
 include "metasprites.inc"
+include "dimensionopt.inc"
 
 
 DEF CURSOR_TOP_Y_POS EQU 56
@@ -22,6 +24,11 @@ SECTION "OptionsTileMap", ROM0
 
     OptionsTilemap: INCBIN "options.tilemap"
     OptionsTilemapEnd:
+
+SECTION "OptionsStrings", ROM0
+
+    StringData: INCBIN "strings.2bpp"
+    StringDataEnd:
 
 ENDSECTION
 
@@ -93,6 +100,11 @@ OptionsEntrypoint::
     ld de, OptionsData          ; load tile data into VRAM
     ld hl, $9000
     ld bc, OptionsDataEnd - OptionsData
+    call VRAMCopy
+
+    ld de, StringData           ; load second half of tiles into VRAM
+    ld hl, $8800
+    ld bc, StringDataEnd - StringData
     call VRAMCopy
 
     ld de, OptionsTilemap       ; load tile map into VRAM
