@@ -112,7 +112,7 @@ DimOptionPrev::
     ld a, [hl+]
     ldh [hWidth], a
     ld a, [hl+]
-    ldh [hHeight], a             ; update HRAM
+    ldh [hHeight], a            ; update HRAM
     
     ret                         ; hl should now point to the descriptor string
 
@@ -149,13 +149,68 @@ DimOptionNext::
     
     ret                         ; hl should now point to the descriptor string
 
+; Cycles to the prev difficulty setting and returns the descriptor string
 ; @returns hl: pointer to descriptor string
 DiffOptionPrev::
-    ret
+    ld a, [wDiffPtr + 1]
+    ld h, a
+    ld a, [wDiffPtr]
+    ld l, a
 
+    cp LOW(DifficultyArr)
+    jr nz, .Else
+    ld a, h
+    cp HIGH(DifficultyArr)
+    jr nz, .Else                ; check whether we are the first elem
+
+.IfAtFirstElem:
+    ld hl, DifficultyArrLast    ; looparound to last elem
+    jr .EndIf
+.Else:
+    ld de, -DIFF_STRUCT_SIZE
+    add hl, de                  ; go to previous elem
+.EndIf:
+
+    ld a, l
+    ld [wDiffPtr], a
+    ld a, h
+    ld [wDiffPtr + 1], a         ; update new elem
+
+    ld a, [hl+]
+    ldh [hDifficultyModifier], a
+    
+    ret                         ; hl should now point to the descriptor string
+
+; Cycles to the next difficulty setting and returns the descriptor string
 ; @returns hl: pointer to descriptor string
 DiffOptionNext::
-    ret
+    ld a, [wDiffPtr + 1]
+    ld h, a
+    ld a, [wDiffPtr]
+    ld l, a
+    cp LOW(DifficultyArrLast)
+    jr nz, .Else
+    ld a, h
+    cp HIGH(DifficultyArrLast)
+    jr nz, .Else                ; check whether we are the last elem
+
+.IfAtLastElem:
+    ld hl, DifficultyArr        ; looparound to last elem
+    jr .EndIf
+.Else:
+    ld de, DIFF_STRUCT_SIZE
+    add hl, de                  ; go to next elem
+.EndIf:
+
+    ld a, l
+    ld [wDiffPtr], a
+    ld a, h
+    ld [wDiffPtr + 1], a         ; update new elem
+
+    ld a, [hl+]
+    ldh [hDifficultyModifier], a
+    
+    ret                         ; hl should now point to the descriptor string
 
 
 

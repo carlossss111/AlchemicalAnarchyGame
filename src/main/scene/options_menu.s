@@ -194,6 +194,65 @@ MoveCursor:
 .EndIf:
     ret
 
+; Cycles to next setting depending on which setting the cursor is selecting
+CycleNextSetting:
+    ld hl, Cursor
+    ld d, 0
+    ld e, META_Y
+    add hl, de
+    ld a, [hl]                  ; get Y position of cursor
+    cp CURSOR_TOP_Y_POS
+    jr nz, .Else
+
+.IfBoardSizeSelected:
+    call DimOptionNext
+    ld b, SIZE_STR_LEN
+    ld d, h
+    ld e, l
+    ld hl, $9800 + SIZE_STR_INDEX
+    call VRAMCopyFast
+    jr .EndIf
+
+.Else:
+    call DiffOptionNext
+    ld b, DIFF_STR_LEN
+    ld d, h
+    ld e, l
+    ld hl, $9800 + DIFF_STR_INDEX
+    call VRAMCopyFast
+
+.EndIf:
+    ret
+
+; Cycles to previous setting depending on which setting the cursor is selecting
+CyclePrevSetting:
+    ld hl, Cursor
+    ld d, 0
+    ld e, META_Y
+    add hl, de
+    ld a, [hl]                  ; get Y position of cursor
+    cp CURSOR_TOP_Y_POS
+    jr nz, .Else
+
+.IfBoardSizeSelected:
+    call DimOptionPrev
+    ld b, SIZE_STR_LEN
+    ld d, h
+    ld e, l
+    ld hl, $9800 + SIZE_STR_INDEX
+    call VRAMCopyFast
+    jr .EndIf
+
+.Else:
+    call DiffOptionPrev
+    ld b, DIFF_STR_LEN
+    ld d, h
+    ld e, l
+    ld hl, $9800 + DIFF_STR_INDEX
+    call VRAMCopyFast
+
+.EndIf:
+    ret
 
 ; Main Options loop that waits for input and then calls subroutines after
 OptionsMain:
@@ -226,21 +285,11 @@ OptionsMain:
     jr .EndIf
 
 .IfUpPressed:
-    call DimOptionPrev
-    ld b, SIZE_STR_LEN
-    ld d, h
-    ld e, l
-    ld hl, $9800 + SIZE_STR_INDEX
-    call VRAMCopyFast
+    call CyclePrevSetting
     jr .EndIf
 
 .IfDownPressed:
-    call DimOptionNext
-    ld b, SIZE_STR_LEN
-    ld d, h
-    ld e, l
-    ld hl, $9800 + SIZE_STR_INDEX
-    call VRAMCopyFast
+    call CycleNextSetting
     jr .EndIf
 
 .IfStartPressed:
